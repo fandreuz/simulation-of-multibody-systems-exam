@@ -147,30 +147,47 @@ program corpi3d
     write(unit=7,fmt=*)
 
     if (dyn) then
+      ! update positions and velocity
       do i = 1,nbody
-        pos(:,i) = pos(:,i) + vel(:,i) * dt + 0.5* f(:,i)/massa * dt**2
-        vel(:,i) = vel(:,i) + 0.5 * dt * f(:,i)/massa
+        pos(:,i) = pos(:,i) + vel(:,i) * dt + 0.5 * f(:,i)/massa * dt**2
+        ! TODO check me vel(:,i) = vel(:,i) + 0.5 * dt * f(:,i)/massa
+        vel(:,i) = vel(:,i) + f(:,i)/massa * dt
       end do
+
       call interazione(pos,nbody,f,mepot,box)
+      
+      ! compute new velocity and kinetic energy
       do i=1,nbody
         vel(:,i) = vel(:,i) + 0.5 * dt * f(:,i)/massa
         ekin(:,i) = 0.5 * massa * (vel(:,i))**2
       end do
+
+      ! total kinetic energy
       mekin = sum(ekin)
+
+      ! write output
       if (mod(it,nstep/nsave).eq.0) then
         write(unit=1,fmt=*)it,it*dt,pos,vel
         write(unit=2,fmt=*)it,mekin,mepot,mekin+mepot
       end if
+
       if (anneal) vel=alfa*vel
+
       rsq=sum((pos-pos0)**2)
       write(unit=8,fmt=*) it, rsq
-    else
+    else ! dyn false
+      ! update positions
       do i = 1,nbody
         pos(:,i) = pos(:,i) + f(:,i)/massa * dt**2
       end do
+
       call interazione(pos,nbody,f,mepot,box)
-      if (mod(it,nstep/nsave).eq.0) write(unit=1,fmt=*)it,pos
-      if (mod(it,nstep/nsave).eq.0) write(unit=2,fmt=*)it,mepot
+
+      ! write positions and potential energy
+      if (mod(it,nstep/nsave).eq.0) then
+        write(unit=1,fmt=*)it,pos
+        write(unit=2,fmt=*)it,mepot
+      end if
     end if
 
     do i = 1,nbody
@@ -194,12 +211,14 @@ program corpi3d
 
   end do ! end of nstep loop
 
+  ! write rad/g(rad)
   do i=0,nh-1
     rad=del*(i+.5)
     part=4*pi*rad**2*del*nbody/box**3
     write(unit=9,fmt=*) rad, g(i+1)/(part*nbody*nstep)
   end do
     
+  ! write relative distances among particles
   do i=1,nbody
     do j=i+1,nbody
       write(unit=3,fmt=*) i,j,sqrt(dot_product(pos(:,i)-pos(:,j),pos(:,i)-pos(:,j)))
