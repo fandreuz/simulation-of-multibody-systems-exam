@@ -111,12 +111,12 @@ program corpi3d
   use thermostat
 
   implicit none
-  integer :: nstep,it,nbody,nsave,ios,i,j,ig,thermostat
 
   integer,parameter :: nh=100
   real(kind=rk), parameter :: kb = 1.380649e-23
   real(kind=rk), parameter :: pi=4.*atan(1.) 
 
+  integer :: nstep,it,nbody,nsave,ios,i,j,ig,thermostat
   real(kind=rk) :: dt,mepot,mekin,massa=1.,alfa=1.,vmax, box, rsq, rad, del, part, temperature, T0, thermostatCoupling
   real(kind=rk),dimension(:,:),allocatable :: pos, pos0
   real(kind=rk),dimension(:),allocatable :: velcm, d, vbox
