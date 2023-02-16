@@ -7,6 +7,7 @@
 !  8: Iteration, cumulative distance from pos0
 !  9: Radial distance, g(r)
 ! 10: pos0
+! 11: Thermostat type, T0, coupling
 
 module modulo1
   implicit none
@@ -61,34 +62,16 @@ module utilities
   end subroutine printMatrix
 end module utilities
 
-module thermostat
+module thermostatRoutines
   use modulo1, rk=>kr
 
   implicit none
-  private
-  public applyThermostat
+  public
   contains
 
-  subroutine applyThermostat(thermostat, vel, temperature, T0, dt, coupling)
+  subroutine velocityScaling(vel, temperature, T0)
     real(kind=rk), intent(inout), dimension(:,:) :: vel
-    real(kind=rk), intent(in) :: temperature, T0, dt, coupling
-    integer, intent(in) :: thermostat
-
-    select case (thermostat)
-    case (0)
-      ! do nothing
-    case (1)
-      call velocityScaling(vel, temperature, T0, dt, coupling)
-    case (2)
-      call berendsenThermostat(vel, temperature, T0, dt, coupling)
-    case default
-      stop "Illegal argument"
-    end select
-  end subroutine applyThermostat
-
-  subroutine velocityScaling(vel, temperature, T0, dt, coupling)
-    real(kind=rk), intent(inout), dimension(:,:) :: vel
-    real(kind=rk), intent(in) :: temperature, T0, dt, coupling
+    real(kind=rk), intent(in) :: temperature, T0
 
     vel = sqrt(T0 / temperature) * vel
   end subroutine velocityScaling
@@ -100,15 +83,12 @@ module thermostat
     vel = sqrt(1 + dt / coupling * (T0 / temperature - 1)) * vel
   end subroutine berendsenThermostat
 
-  subroutine andersenThermostat()
-  end subroutine andersenThermostat
-
-end module thermostat
+end module thermostatRoutines
 
 program corpi3d
   use modulo1, rk=>kr
   use utilities
-  use thermostat
+  use thermostatRoutines
 
   implicit none
 
@@ -139,19 +119,8 @@ program corpi3d
       read*, alfa
     end if
 
-    write(unit=*,fmt="(a)",advance="no")"thermostat? (0=No thermostat, 1=Velocity scaling, 2=Berendsen, 3=Andersen)"
-    read*, thermostat
-    if (thermostat.gt.3) stop "Illegal argument"
-    if (thermostat.lt.0) stop "Illegal argument"
-    if (thermostat.ne.0) then
-      write(unit=*,fmt="(a)",advance="no")"T0?"
-      read*, T0
-
-      if (thermostat.ne.1) then
-        write(unit=*,fmt="(a)",advance="no")"Thermostat coupling?"
-        read*, thermostatCoupling
-      end if
-    end if
+    read(11, *) thermostat, T0, thermostatCoupling
+    write(unit=*,fmt="(a I1 a F8.3 a F8.3)")"Thermostat:", thermostat, ", ", T0, ", ", thermostatCoupling
   end if
 
   write(unit=*,fmt="(a)",advance="no")"n of bodies?"
@@ -239,9 +208,19 @@ program corpi3d
       ! total kinetic energy
       mekin = sum(ekin)
 
-      ! apply thermostat
       temperature = mekin * 2 / (kb * (3*nbody - 3))
-      call applyThermostat(thermostat, vel, temperature, T0, dt, thermostatCoupling)
+
+      ! apply thermostat
+      select case (thermostat)
+      case (0)
+        ! do nothing
+      case (1)
+        call velocityScaling(vel, temperature, T0)
+      case (2)
+        call berendsenThermostat(vel, temperature, T0, dt, thermostatCoupling)
+      case default
+        stop "Illegal argument"
+      end select
 
       ! recompute after thermostat
       do i=1,nbody
