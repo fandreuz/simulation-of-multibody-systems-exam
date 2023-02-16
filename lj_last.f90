@@ -1,56 +1,3 @@
-module modulo1
-  implicit none
-  private
-  public :: interazione,kr
-  integer,parameter::kr=selected_real_kind(12)
-  contains
-
-  subroutine interazione(pos,nbody,f,upot,box)
-    real(kind=kr), intent(in), dimension(:,:) :: pos
-    integer, intent(in) :: nbody
-    real(kind=kr), intent(in) :: box
-    real(kind=kr), intent(out) :: upot
-    real(kind=kr), intent(out), dimension(:,:) :: f
-    real(kind=kr), dimension(size(pos,1)) :: posij, deltaij
-    real(kind=kr) :: rij
-    integer :: i,j
-
-    upot = 0
-    f = 0
-    do i=1,nbody
-      do j=1,nbody
-        if( i==j ) cycle
-        posij = pos(:,i)-pos(:,j)
-        deltaij = mod(posij,box)
-        deltaij = deltaij-box*int(2*deltaij/box)
-        rij=sqrt(dot_product(deltaij,deltaij))
-        upot = upot + 4*(rij**(-12)-rij**(-6)) 
-        f(:,i) = f(:,i) + 24*(2.*rij**(-14)-rij**(-8))*deltaij
-      end do
-    end do
-    upot = upot/2
-  end subroutine interazione
-end module modulo1
-
-module utilities
-  use modulo1, rk=>kr
-
-  implicit none
-  private
-  public printMatrix
-  contains
-  
-  subroutine printMatrix(matrix,rows,cols)
-    real(kind=rk), intent(in) :: matrix(rows, cols)
-    integer, intent(in) :: rows, cols
-    integer :: i
-
-    do i=1,rows
-      print*, matrix(i,:)
-    end do
-  end subroutine printMatrix
-end module utilities
-
 program corpi3d
   use modulo1, rk=>kr
   use utilities
@@ -142,6 +89,7 @@ program corpi3d
   pos0=pos
 
   call interazione(pos,nbody,f,mepot,box)
+
   do it = 1,nstep
     write(unit=7,fmt=*) nbody
     write(unit=7,fmt=*)
@@ -228,5 +176,57 @@ program corpi3d
   write(unit=4) pos,vel
 end program corpi3d
 
+! #### modules ####
 
+module modulo1
+  implicit none
+  private
+  public :: interazione,kr
+  integer,parameter::kr=selected_real_kind(12)
+  contains
 
+  subroutine interazione(pos,nbody,f,upot,box)
+    real(kind=kr), intent(in), dimension(:,:) :: pos
+    integer, intent(in) :: nbody
+    real(kind=kr), intent(in) :: box
+    real(kind=kr), intent(out) :: upot
+    real(kind=kr), intent(out), dimension(:,:) :: f
+    real(kind=kr), dimension(size(pos,1)) :: posij, deltaij
+    real(kind=kr) :: rij
+    integer :: i,j
+
+    upot = 0
+    f = 0
+    do i=1,nbody
+      do j=1,nbody
+        if( i==j ) cycle
+        posij = pos(:,i)-pos(:,j)
+        deltaij = mod(posij,box)
+        deltaij = deltaij-box*int(2*deltaij/box)
+        rij=sqrt(dot_product(deltaij,deltaij))
+        upot = upot + 4*(rij**(-12)-rij**(-6)) 
+        f(:,i) = f(:,i) + 24*(2.*rij**(-14)-rij**(-8))*deltaij
+      end do
+    end do
+    upot = upot/2
+  end subroutine interazione
+end module modulo1
+
+module utilities
+  use modulo1, rk=>kr
+
+  implicit none
+  private
+  public printMatrix
+  contains
+  
+  subroutine printMatrix(matrix,rows,cols)
+    real(kind=rk), intent(in) :: matrix(rows, cols)
+    integer, intent(in) :: rows, cols
+    integer :: i
+
+    do i=1,rows
+      print*, matrix(i,:)
+    end do
+  end subroutine printMatrix
+end module utilities
