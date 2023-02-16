@@ -10,7 +10,7 @@ program corpi3d
   real(kind=rk), parameter :: kb = 1.380649e-23
   real(kind=rk), parameter :: pi=4.*atan(1.) 
 
-  real(kind=rk) :: dt,mepot,mekin,massa=1.,alfa=1.,vmax, box, rsq, rad, del, part, temperature, T0
+  real(kind=rk) :: dt,mepot,mekin,massa=1.,alfa=1.,vmax, box, rsq, rad, del, part, temperature, T0, thermostatCoupling
   real(kind=rk),dimension(:,:),allocatable :: pos, pos0
   real(kind=rk),dimension(:),allocatable :: velcm, d, vbox
   real(kind=rk),dimension(:,:),allocatable :: ekin,vel,f
@@ -39,6 +39,11 @@ program corpi3d
     if (thermostat.ne.0) then
       write(unit=*,fmt="(a)",advance="no")"T0?"
       read*, T0
+
+      if (thermostat.ne.1) then
+        write(unit=*,fmt="(a)",advance="no")"Thermostat coupling?"
+        read*, thermostatCoupling
+      end if
     end if
   end if
 
@@ -129,7 +134,7 @@ program corpi3d
 
       ! apply thermostat
       temperature = mekin * 2 / (kb * (3*nbody - 3))
-      call applyThermostat(thermostat, vel, temperature, T0)
+      call applyThermostat(thermostat, vel, temperature, T0, dt, thermostatCoupling)
 
       ! recompute after thermostat
       do i=1,nbody
@@ -264,29 +269,35 @@ module thermostat
   public applyThermostat
   contains
 
-  subroutine applyThermostat(thermostat, vel, temperature, T0)
+  subroutine applyThermostat(thermostat, vel, temperature, T0, dt, coupling)
     real(kind=rk), intent(inout), dimension(:,:) :: vel
-    real(kind=rk), intent(in) :: temperature, T0
+    real(kind=rk), intent(in) :: temperature, T0, dt, coupling
     integer, intent(in) :: thermostat
 
     select case (thermostat)
     case (0)
       ! do nothing
     case (1)
-      call velocityScaling(vel, temperature, T0)
+      call velocityScaling(vel, temperature, T0, dt, coupling)
+    case (2)
+      call berendsenThermostat(vel, temperature, T0, dt, coupling)
     case default
       stop "Illegal argument"
     end select
   end subroutine applyThermostat
 
-  subroutine velocityScaling(vel, temperature, T0)
+  subroutine velocityScaling(vel, temperature, T0, dt, coupling)
     real(kind=rk), intent(inout), dimension(:,:) :: vel
-    real(kind=rk), intent(in) :: temperature, T0
+    real(kind=rk), intent(in) :: temperature, T0, dt, coupling
 
     vel = sqrt(T0 / temperature) * vel
   end subroutine velocityScaling
 
-  subroutine berendsenThermostat()
+  subroutine berendsenThermostat(vel, temperature, T0, dt, coupling)
+    real(kind=rk), intent(inout), dimension(:,:) :: vel
+    real(kind=rk), intent(in) :: temperature, T0, dt, coupling
+
+    vel = sqrt(1 + dt / coupling * (T0 / temperature - 1)) * vel
   end subroutine berendsenThermostat
 
   subroutine andersenThermostat()
