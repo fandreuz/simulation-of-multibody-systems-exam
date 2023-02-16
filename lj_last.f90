@@ -4,9 +4,12 @@ program corpi3d
 
   implicit none
   integer :: nstep,it,nbody,nsave,ios,i,j,ig 
+  
   integer,parameter :: nh=100
+  real(kind=rk), parameter :: kb = 1.380649e-23
   real(kind=rk), parameter :: pi=4.*atan(1.) 
-  real(kind=rk) :: dt,mepot,mekin,massa=1.,alfa=1.,vmax, box, rsq, rad, del, part
+
+  real(kind=rk) :: dt,mepot,mekin,massa=1.,alfa=1.,vmax, box, rsq, rad, del, part, temperature
   real(kind=rk),dimension(:,:),allocatable :: pos, pos0
   real(kind=rk),dimension(:),allocatable :: velcm, d, vbox
   real(kind=rk),dimension(:,:),allocatable :: ekin,vel,f
@@ -113,10 +116,12 @@ program corpi3d
       ! total kinetic energy
       mekin = sum(ekin)
 
+      temperature = mekin * 2 / (kb * (3*nbody - 3))
+
       ! write output
       if (mod(it,nstep/nsave).eq.0) then
         write(unit=1,fmt=*)it,it*dt,pos,vel
-        write(unit=2,fmt=*)it,mekin,mepot,mekin+mepot
+        write(unit=2,fmt=*)it,mekin,mepot,mekin+mepot,temperature
       end if
 
       if (anneal) vel=alfa*vel
