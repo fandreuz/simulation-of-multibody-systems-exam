@@ -113,8 +113,7 @@ program corpi3d
       ! update positions and velocity
       do i = 1,nbody
         pos(:,i) = pos(:,i) + vel(:,i) * dt + 0.5 * f(:,i)/massa * dt**2
-        ! TODO check me vel(:,i) = vel(:,i) + 0.5 * dt * f(:,i)/massa
-        vel(:,i) = vel(:,i) + f(:,i)/massa * dt
+        vel(:,i) = vel(:,i) + 0.5 * dt * f(:,i)/massa
       end do
 
       call interazione(pos,nbody,f,mepot,box)
