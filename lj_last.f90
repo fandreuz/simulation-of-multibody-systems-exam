@@ -1,15 +1,16 @@
 program corpi3d
   use modulo1, rk=>kr
   use utilities
+  use thermostat
 
   implicit none
-  integer :: nstep,it,nbody,nsave,ios,i,j,ig 
-  
+  integer :: nstep,it,nbody,nsave,ios,i,j,ig,thermostat
+
   integer,parameter :: nh=100
   real(kind=rk), parameter :: kb = 1.380649e-23
   real(kind=rk), parameter :: pi=4.*atan(1.) 
 
-  real(kind=rk) :: dt,mepot,mekin,massa=1.,alfa=1.,vmax, box, rsq, rad, del, part, temperature
+  real(kind=rk) :: dt,mepot,mekin,massa=1.,alfa=1.,vmax, box, rsq, rad, del, part, temperature, T0
   real(kind=rk),dimension(:,:),allocatable :: pos, pos0
   real(kind=rk),dimension(:),allocatable :: velcm, d, vbox
   real(kind=rk),dimension(:,:),allocatable :: ekin,vel,f
@@ -20,6 +21,7 @@ program corpi3d
 
   write(unit=*,fmt="(a)",advance="no")"box?"
   read*, box
+
   write(unit=*,fmt="(a)",advance="no")"dynamics?"
   read*, dyn
   if (dyn) then
@@ -29,7 +31,17 @@ program corpi3d
       write(unit=*,fmt="(a)",advance="no")"scaling parameter?"
       read*, alfa
     end if
+
+    write(unit=*,fmt="(a)",advance="no")"thermostat? (0=No thermostat, 1=Velocity scaling, 2=Berendsen, 3=Andersen)"
+    read*, thermostat
+    if (thermostat.gt.3) stop "Illegal argument"
+    if (thermostat.lt.0) stop "Illegal argument"
+    if (thermostat.ne.0) then
+      write(unit=*,fmt="(a)",advance="no")"T0?"
+      read*, T0
+    end if
   end if
+
   write(unit=*,fmt="(a)",advance="no")"n of bodies?"
   read*, nbody
   write(unit=*,fmt="(a)",advance="no")"how many it in output?"
@@ -116,6 +128,15 @@ program corpi3d
       ! total kinetic energy
       mekin = sum(ekin)
 
+      ! apply thermostat
+      temperature = mekin * 2 / (kb * (3*nbody - 3))
+      call applyThermostat(thermostat, vel, temperature, T0)
+
+      ! recompute after thermostat
+      do i=1,nbody
+        ekin(:,i) = 0.5 * massa * (vel(:,i))**2
+      end do
+      mekin = sum(ekin)
       temperature = mekin * 2 / (kb * (3*nbody - 3))
 
       ! write output
@@ -241,8 +262,23 @@ module thermostat
 
   implicit none
   private
-  public velocityScaling, berendsenThermostat, andersenThermostat
+  public applyThermostat
   contains
+
+  subroutine applyThermostat(thermostat, vel, temperature, T0)
+    real(kind=rk), intent(inout), dimension(:,:) :: vel
+    real(kind=rk), intent(in) :: temperature, T0
+    integer, intent(in) :: thermostat
+
+    select case (thermostat)
+    case (0)
+      ! do nothing
+    case (1)
+      call velocityScaling(vel, temperature, T0)
+    case default
+      stop "Illegal argument"
+    end select
+  end subroutine applyThermostat
 
   subroutine velocityScaling(vel, temperature, T0)
     real(kind=rk), intent(inout), dimension(:,:) :: vel
