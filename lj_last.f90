@@ -235,3 +235,26 @@ module utilities
     end do
   end subroutine printMatrix
 end module utilities
+
+module thermostat
+  use modulo1, rk=>kr
+
+  implicit none
+  private
+  public velocityScaling, berendsenThermostat, andersenThermostat
+  contains
+
+  subroutine velocityScaling(vel, temperature, T0)
+    real(kind=rk), intent(inout), dimension(:,:) :: vel
+    real(kind=rk), intent(in) :: temperature, T0
+
+    vel = sqrt(T0 / temperature) * vel
+  end subroutine velocityScaling
+
+  subroutine berendsenThermostat()
+  end subroutine berendsenThermostat
+
+  subroutine andersenThermostat()
+  end subroutine andersenThermostat
+
+end module thermostat
