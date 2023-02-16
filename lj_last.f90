@@ -1,3 +1,13 @@
+! OUTPUT FILES
+!  1: Iteration, position, [velocity] if dynamic
+!  2: Iteration, [Kinetic energy, Potential energy, Total energy, Temperature] if dynamic else [Potential energy]
+!  3: Relative distance among particles after simulation is over
+!  4: Old positions and velocities (continue old simulation)
+!  7: ?
+!  8: Iteration, cumulative distance from pos0
+!  9: Radial distance, g(r)
+! 10: pos0
+
 module modulo1
   implicit none
   private
