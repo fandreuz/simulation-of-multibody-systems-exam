@@ -92,28 +92,21 @@ program corpi3d
 
   implicit none
 
-  integer,parameter :: nh=100
-  real(kind=rk), parameter :: kb = 1.380649e-23
-  real(kind=rk), parameter :: pi=4.*atan(1.) 
+  integer, parameter :: nh=100, nbody=108, nstep=10000, nsave=1000
+  logical, parameter :: dyn=.TRUE., anneal=.FALSE., cont=.FALSE.
+  real(kind=rk), parameter :: box=6, dt=0.00001, vmax=0.001
+  real(kind=rk), parameter :: kb = 1.380649e-23, pi=4.*atan(1.)
 
-  integer :: nstep,it,nbody,nsave,ios,i,j,ig,thermostat
-  real(kind=rk) :: dt,mepot,mekin,massa=1.,alfa=1.,vmax, box, rsq, rad, del, part, temperature, T0, thermostatCoupling
+  integer :: it,ios,i,j,ig,thermostat
+  real(kind=rk) :: mepot,mekin,massa=1.,alfa=1., rsq, rad, del, part, temperature, T0, thermostatCoupling
   real(kind=rk),dimension(:,:),allocatable :: pos, pos0
   real(kind=rk),dimension(:),allocatable :: velcm, d, vbox
   real(kind=rk),dimension(:,:),allocatable :: ekin,vel,f
   real(kind=rk),dimension(nh) :: g=0.
   real(kind=rk), dimension(3) :: pij, dij
   real(kind=rk) :: gij
-  logical :: dyn,anneal,cont
 
-  write(unit=*,fmt="(a)",advance="no")"box?"
-  read*, box
-
-  write(unit=*,fmt="(a)",advance="no")"dynamics?"
-  read*, dyn
   if (dyn) then
-    write(unit=*,fmt="(a)",advance="no")"annealing?"
-    read*, anneal
     if (anneal) then
       write(unit=*,fmt="(a)",advance="no")"scaling parameter?"
       read*, alfa
@@ -122,11 +115,6 @@ program corpi3d
     read(11, *) thermostat, T0, thermostatCoupling
     write(unit=*,fmt="(a I1 a F8.3 a F8.3)")"Thermostat:", thermostat, ", ", T0, ", ", thermostatCoupling
   end if
-
-  write(unit=*,fmt="(a)",advance="no")"n of bodies?"
-  read*, nbody
-  write(unit=*,fmt="(a)",advance="no")"how many it in output?"
-  read*, nsave
 
   allocate(vel(3,nbody))
   allocate(ekin(3,nbody))
@@ -138,14 +126,8 @@ program corpi3d
   vbox=spread(box,1,3)
   del=box/(2*nh)
 
-  write(unit=*,fmt="(a)",advance="no")"time step: "
-  read*,dt
-  write(unit=*,fmt="(a)",advance="no")"n.step: "
-  read*,nstep
   !print*,"mass of the bodies: "
   !read*,massa
-  write(unit=*,fmt="(a)",advance="no") "Continuation run?"
-  read*, cont
 
   vel=0.
   if (cont) then
@@ -169,8 +151,6 @@ program corpi3d
       vel=2*(vel-0.5)
       
       ! scale velocity
-      write(unit=*,fmt="(a)",advance="no")"vmax? "
-      read*, vmax 
       vel=vmax*vel
 
       ! translate the center of mass to the origin
