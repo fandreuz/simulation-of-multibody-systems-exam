@@ -156,8 +156,6 @@ program corpi3d
       read(unit=10,fmt=*,iostat=ios) pos 
       if (ios<=0) exit
     end do
-    write(unit=*,fmt="(a)") "Position ..."
-    call printMatrix(pos,3,nbody)
 
     if (dyn) then
   !    do
