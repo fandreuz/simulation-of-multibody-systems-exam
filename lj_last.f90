@@ -43,25 +43,6 @@ module modulo1
   end subroutine interazione
 end module modulo1
 
-module utilities
-  use modulo1, rk=>kr
-
-  implicit none
-  private
-  public printMatrix
-  contains
-  
-  subroutine printMatrix(matrix,rows,cols)
-    real(kind=rk), intent(in) :: matrix(rows, cols)
-    integer, intent(in) :: rows, cols
-    integer :: i
-
-    do i=1,rows
-      print*, matrix(i,:)
-    end do
-  end subroutine printMatrix
-end module utilities
-
 module thermostatRoutines
   use modulo1, rk=>kr
 
@@ -87,7 +68,6 @@ end module thermostatRoutines
 
 program corpi3d
   use modulo1, rk=>kr
-  use utilities
   use thermostatRoutines
 
   implicit none
