@@ -72,10 +72,10 @@ program corpi3d
 
   implicit none
 
-  integer, parameter :: nh=100, nbody=108, nstep=10000, nsave=1000
+  integer, parameter :: nh=100, nbody=864, nstep=3000, nsave=3000
   logical, parameter :: dyn=.TRUE., anneal=.FALSE., cont=.FALSE.
-  real(kind=rk), parameter :: box=6, dt=0.00001, vmax=0.001
-  real(kind=rk), parameter :: kb = 1.380649e-23, pi=4.*atan(1.)
+  real(kind=rk), parameter :: box=12, dt=0.004, vmax=0.001
+  real(kind=rk), parameter :: pi=4.*atan(1.)
 
   integer :: it,ios,i,j,ig,thermostat
   real(kind=rk) :: mepot,mekin,massa=1.,alfa=1., rsq, rad, del, part, temperature, T0, thermostatCoupling
@@ -86,13 +86,14 @@ program corpi3d
   real(kind=rk), dimension(3) :: pij, dij
   real(kind=rk) :: gij
 
+  read(11, *) thermostat, T0, thermostatCoupling
+
   if (dyn) then
     if (anneal) then
       write(unit=*,fmt="(a)",advance="no")"scaling parameter?"
       read*, alfa
     end if
 
-    read(11, *) thermostat, T0, thermostatCoupling
     write(unit=*,fmt="(a I1 a F8.3 a F8.3)")"Thermostat:", thermostat, ", ", T0, ", ", thermostatCoupling
   end if
 
@@ -129,15 +130,17 @@ program corpi3d
       call random_number(vel)
       ! [-1,1]
       vel=2*(vel-0.5)
-      
-      ! scale velocity
-      vel=vmax*vel
 
       ! translate the center of mass to the origin
       do i=1,3
         velcm(i) = sum(vel(i,:))/nbody
         vel(i,:) = vel(i,:) - velcm(i)
       end do
+
+      if (T0.gt.0) then
+        temperature = sum(vel**2) / (3._8*(nbody - 1))
+        vel = sqrt(T0/temperature) * vel
+      end if
     end if
   end if
   pos0=pos
@@ -166,7 +169,7 @@ program corpi3d
       ! total kinetic energy
       mekin = sum(ekin)
 
-      temperature = mekin * 2 / (kb * (3*nbody - 3))
+      temperature = mekin * 2 / (3._8*(nbody - 1))
 
       ! apply thermostat
       select case (thermostat)
@@ -185,7 +188,7 @@ program corpi3d
         ekin(:,i) = 0.5 * massa * (vel(:,i))**2
       end do
       mekin = sum(ekin)
-      temperature = mekin * 2 / (kb * (3*nbody - 3))
+      temperature = mekin * 2 / (3._8*(nbody - 1))
 
       ! write output
       if (mod(it,nstep/nsave).eq.0) then
