@@ -11,7 +11,7 @@ read*, box
 m=(nbody/4)**(1./3.)
 unitbox=box/m
 allocate (r(3,nbody))
-write(unit=*, fmt="(I3 a F8.3)") m, ", ", unitbox
+write(unit=*, fmt="(I3 a F8.3 a F8.3)") m, ", ", unitbox, ",", nbody / (box**3)
 
 b(1,1)=0.
 b(2,1)=0.
