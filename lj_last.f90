@@ -73,7 +73,7 @@ program corpi3d
   implicit none
 
   integer, parameter :: nh=100, nbody=864, nstep=3000, nsave=3000
-  logical, parameter :: dyn=.TRUE., anneal=.FALSE., cont=.FALSE.
+  logical, parameter :: dyn=.TRUE., anneal=.FALSE., cont=.FALSE., pbc=.TRUE.
   real(kind=rk), parameter :: box=12, dt=0.004, vmax=0.001
   real(kind=rk), parameter :: pi=4.*atan(1.)
 
@@ -157,6 +157,10 @@ program corpi3d
         pos(:,i) = pos(:,i) + vel(:,i) * dt + 0.5 * f(:,i)/massa * dt**2
         vel(:,i) = vel(:,i) + 0.5 * dt * f(:,i)/massa
       end do
+
+      if (pbc) then
+        pos = mod(pos + box, box)
+      end if
 
       call interazione(pos,nbody,f,mepot,box)
       
