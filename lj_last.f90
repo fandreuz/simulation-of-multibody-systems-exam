@@ -149,6 +149,28 @@ program corpi3d
   rsq=sum((pos-pos0)**2) / nbody
   write(unit=8,fmt=*) 0, rsq
 
+  ! compute g
+  do i=1,nbody-1
+    do j=i+1,nbody
+      pij = pos(:,i)-pos(:,j)
+      dij = mod(pij,box)
+      dij = dij-box*int(2*dij/box)
+      gij=sqrt(dot_product(dij,dij))
+      if (gij.lt.box/2.) then
+        ig=int(gij/del)
+        g(ig)=g(ig)+2
+      end if
+    end do
+  end do
+
+  ! write rad/g(rad)
+  do i=0,nh-1
+    rad=del*(i+.5)
+    part=4*pi*rad**2*del*nbody/box**3
+    write(unit=9,fmt=*) rad, g(i+1)/(part*nbody)
+    g(i+1) = 0
+  end do
+
   call interazione(pos,nbody,f,mepot,box)
 
   do it = 1,nstep
@@ -247,7 +269,7 @@ program corpi3d
       do i=0,nh-1
         rad=del*(i+.5)
         part=4*pi*rad**2*del*nbody/box**3
-        write(unit=9,fmt=*) rad, g(i+1)/(part*nbody*gsave)
+        write(unit=9,fmt=*) rad, g(i+1)/(part*nbody) * gsave / nstep
         g(i+1) = 0
       end do
     end if
