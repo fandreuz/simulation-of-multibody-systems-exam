@@ -141,9 +141,13 @@ program corpi3d
         temperature = sum(vel**2) / (3._8*(nbody - 1))
         vel = sqrt(T0/temperature) * vel
       end if
+      write(unit=1,fmt=*)0,0,pos,vel
     end if
   end if
+
   pos0=pos
+  rsq=sum((pos-pos0)**2) / nbody
+  write(unit=8,fmt=*) 0, rsq
 
   call interazione(pos,nbody,f,mepot,box)
 
@@ -202,7 +206,7 @@ program corpi3d
 
       if (anneal) vel=alfa*vel
 
-      rsq=sum((pos-pos0)**2)
+      rsq=sum((pos-pos0)**2) / nbody
       write(unit=8,fmt=*) it, rsq
     else ! dyn false
       ! update positions
