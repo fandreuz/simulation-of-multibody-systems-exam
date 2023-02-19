@@ -72,7 +72,7 @@ program corpi3d
 
   implicit none
 
-  integer, parameter :: nh=100, nbody=864, nstep=3000, nsave=3000
+  integer, parameter :: nh=100, nbody=864, nstep=3000, nsave=3000, gsave=10
   logical, parameter :: dyn=.TRUE., anneal=.FALSE., cont=.FALSE., pbc=.TRUE.
   real(kind=rk), parameter :: box=12, dt=0.004, vmax=0.001
   real(kind=rk), parameter :: pi=4.*atan(1.)
@@ -242,14 +242,17 @@ program corpi3d
       end do
     end do
 
-  end do ! end of nstep loop
+    if (mod(it,nstep/gsave).eq.0) then
+      ! write rad/g(rad)
+      do i=0,nh-1
+        rad=del*(i+.5)
+        part=4*pi*rad**2*del*nbody/box**3
+        write(unit=9,fmt=*) rad, g(i+1)/(part*nbody*gsave)
+        g(i+1) = 0
+      end do
+    end if
 
-  ! write rad/g(rad)
-  do i=0,nh-1
-    rad=del*(i+.5)
-    part=4*pi*rad**2*del*nbody/box**3
-    write(unit=9,fmt=*) rad, g(i+1)/(part*nbody*nstep)
-  end do
+  end do ! end of nstep loop
     
   ! write relative distances among particles
   do i=1,nbody
