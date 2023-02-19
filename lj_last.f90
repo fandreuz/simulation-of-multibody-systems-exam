@@ -72,9 +72,9 @@ program corpi3d
 
   implicit none
 
-  integer, parameter :: nh=100, nbody=864, nstep=3000, nsave=3000, gsave=10
+  integer, parameter :: nh=100, nbody=864, nstep=3000, nsave=3000, gsave=2
   logical, parameter :: dyn=.TRUE., anneal=.FALSE., cont=.FALSE., pbc=.TRUE.
-  real(kind=rk), parameter :: box=12, dt=0.004, vmax=0.001
+  real(kind=rk), parameter :: box=10, dt=0.004, vmax=0.001
   real(kind=rk), parameter :: pi=4.*atan(1.)
 
   integer :: it,ios,i,j,ig,thermostat
