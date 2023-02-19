@@ -72,7 +72,7 @@ program corpi3d
 
   implicit none
 
-  integer, parameter :: nh=100, nbody=864, nstep=3000, nsave=3000, gsave=2
+  integer, parameter :: nh=100, nbody=864, nstep=3000, nsave=3000, gsave=2, gskip=500
   logical, parameter :: dyn=.TRUE., anneal=.FALSE., cont=.FALSE., pbc=.TRUE.
   real(kind=rk), parameter :: box=10, dt=0.004, vmax=0.001
   real(kind=rk), parameter :: pi=4.*atan(1.)
@@ -250,28 +250,30 @@ program corpi3d
       write (unit=7,fmt=*) "Ar", d-box*int(2.*d/box)+vbox/2.
     end do
 
-    ! compute g
-    do i=1,nbody-1
-      do j=i+1,nbody
-        pij = pos(:,i)-pos(:,j)
-        dij = mod(pij,box)
-        dij = dij-box*int(2*dij/box)
-        gij=sqrt(dot_product(dij,dij))
-        if (gij.lt.box/2.) then
-          ig=int(gij/del) 
-          g(ig)=g(ig)+2
-        end if
+    if (it.gt.gskip) then
+      ! compute g
+      do i=1,nbody-1
+        do j=i+1,nbody
+          pij = pos(:,i)-pos(:,j)
+          dij = mod(pij,box)
+          dij = dij-box*int(2*dij/box)
+          gij=sqrt(dot_product(dij,dij))
+          if (gij.lt.box/2.) then
+            ig=int(gij/del)
+            g(ig)=g(ig)+2
+          end if
+        end do
       end do
-    end do
 
-    if (mod(it,nstep/gsave).eq.0) then
-      ! write rad/g(rad)
-      do i=0,nh-1
-        rad=del*(i+.5)
-        part=4*pi*rad**2*del*nbody/box**3
-        write(unit=9,fmt=*) rad, g(i+1)/(part*nbody) * gsave / nstep
-        g(i+1) = 0
-      end do
+      if (mod(it,nstep/gsave).eq.0) then
+        ! write rad/g(rad)
+        do i=0,nh-1
+          rad=del*(i+.5)
+          part=4*pi*rad**2*del*nbody/box**3
+          write(unit=9,fmt=*) rad, g(i+1)/(part*nbody) * gsave / nstep
+          g(i+1) = 0
+        end do
+      end if
     end if
 
   end do ! end of nstep loop
