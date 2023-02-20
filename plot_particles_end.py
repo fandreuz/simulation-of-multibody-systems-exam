@@ -1,17 +1,7 @@
 import matplotlib.pyplot as plt
-import numpy as np
+from extract_positions import extract
 
-with open('fort.1') as f:
-    for line in f:
-        pass
-    last_line = line
-
-data = last_line.split()
-# remove iteration/time
-data = data[2:]
-data = data[:len(data) // 2]
-
-data = np.array(tuple(map(float, data))).reshape(3, -1, order='F')
+data = extract("fort.1")
 x = data[0]
 y = data[1]
 z = data[2]
