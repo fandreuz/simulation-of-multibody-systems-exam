@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
-from sklearn.linear_model import LinearRegression
 
 font = {'weight' : 'bold',
         'size'   : 20}
@@ -11,19 +10,10 @@ def extract_data(filename):
     return np.fromregex(filename, r"\s*([^\s]+)\s+([^\s]+)", [('i', int), ('r2', float)])
 
 def compute_D(r2):
-    x = (np.arange(len(r2)) * dt)[:, None]
-    y = r2 / 6
-
-    # remove first skip instants
-    x = x[skip:]
-    y = y[skip:]
-
-    model = LinearRegression(fit_intercept=False).fit(x, y)
-    return model.coef_[0]
+    return r2[-1] / (6 * dt * len(r2))
 
 files = [
     # (filename, x)
-    ("fort.8", 1)
 ]
 
 plt.figure()
